@@ -1,0 +1,61 @@
+﻿name: Build EXE
+
+on:
+  push
+
+jobs:
+  build-matrix:
+    name: Build Matrix (Single-file EXE)
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - win-x64
+          - linux-x64
+          - osx-x64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - run: dotnet restore CatalogReader.sln
+
+      - name: Publish (${{ matrix.platform }})
+        run: >-
+          dotnet publish CatalogReader/CatalogReader.csproj 
+          -c Release
+          -r ${{ matrix.platform }}
+          -p:PublishSingleFile=true
+          -p:SelfContained=true
+          -p:EnableCompressionInSingleFile=true
+          --no-restore
+
+      - name: Rename binary to include commit hash (${{ matrix.platform }})
+        shell: pwsh
+        run: |
+          $shortSha = $env:GITHUB_SHA.Substring(0,8)
+          $platform = "${{ matrix.platform }}"
+          $publishDir = "CatalogReader\bin\Release\net9.0\$platform\publish"
+          $base = "CatalogReader"
+          
+          if ($platform -eq "win-x64") {
+            $src = Join-Path $publishDir "$base.exe"
+            $destName = "$base-$shortSha.exe"
+          } else {
+            $src = Join-Path $publishDir $base
+            $destName = "$base-$shortSha"
+          }
+          
+          Rename-Item -Path $src -NewName $destName
+
+      - name: Upload artifact (${{ matrix.platform }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: CatalogReader-${{ matrix.platform }}
+          path: CatalogReader/bin/Release/net9.0/${{ matrix.platform }}/publish/*
+          if-no-files-found: error
