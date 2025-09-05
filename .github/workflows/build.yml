@@ -45,10 +45,10 @@ jobs:
           
           if ($platform -eq "win-x64") {
             $src = Join-Path $publishDir "$base.exe"
-            $destName = "$base-$shortSha.exe"
+            $destName = "$base-$shortSha-$platform.exe"
           } else {
             $src = Join-Path $publishDir $base
-            $destName = "$base-$shortSha"
+            $destName = "$base-$shortSha-$platform"
           }
           
           Rename-Item -Path $src -NewName $destName
