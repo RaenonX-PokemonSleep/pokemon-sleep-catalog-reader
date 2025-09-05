@@ -1,0 +1,3 @@
+[submodule "AddressablesTools"]
+	path = AddressablesTools
+	url = https://github.com/nesrak1/AddressablesTools
