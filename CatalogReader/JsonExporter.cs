@@ -26,14 +26,23 @@ internal static class JsonExporter {
             using var writer = new Utf8JsonWriter(outputStream, jsonOptions);
             writer.WriteStartArray();
 
+            var seen = new HashSet<(string path, string hash)>();
+
             foreach (var loc in ccd.Resources.Select(kv => kv.Value).SelectMany(list => list)) {
                 if (loc == null) {
                     continue;
                 }
 
+                var path = loc.PrimaryKey;
+                var hash = loc.InternalId;
+
+                if (!seen.Add((path, hash))) {
+                    continue;
+                }
+
                 writer.WriteStartObject();
-                writer.WriteString("path", loc.PrimaryKey ?? string.Empty);
-                writer.WriteString("hash", loc.InternalId ?? string.Empty);
+                writer.WriteString("path", path);
+                writer.WriteString("hash", hash);
                 writer.WriteEndObject();
             }
 
